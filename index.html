@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ACE: Active Continual Learning with Evidential Uncertainty (NeurIPS 2026 submission)</title>
+  <meta name="description" content="ACE: an online evidential regression algorithm that adapts inverse-dynamics controllers across ground, underwater, and aerial robots without forgetting. Anonymous NeurIPS 2026 submission." />
+  <meta name="robots" content="noindex" />
+  <meta property="og:title" content="ACE: Active Continual Learning with Evidential Uncertainty" />
+  <meta property="og:description" content="One uncertainty-aware adapter, three robots, fifteen distribution-shift conditions. Best or tied-best neural method on 10 of 15 cells, bounded on every cell. Anonymous submission." />
+  <meta property="og:image" content="assets/figures/abstract.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'\\[',right:'\\]',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}], throwOnError:false });"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-mesh" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="brand" href="#top">
+      <span class="brand-mark">ACE</span>
+      <span class="brand-tag">NeurIPS&nbsp;2026</span>
+    </a>
+    <nav class="topnav">
+      <a href="#method">Method</a>
+      <a href="#demos">Demos</a>
+      <a href="#results">Results</a>
+    </nav>
+  </header>
+
+  <main id="top">
+
+    <!-- ============== HERO ============== -->
+    <section class="hero">
+      <div class="hero-inner">
+        <p class="eyebrow"><span class="eyebrow-dot"></span>NeurIPS 2026 submission &middot; Anonymous</p>
+        <h1 class="title">
+          <span class="ace-prefix">ACE:</span> <span class="ace-letter">A</span>ctive <span class="ace-letter">C</span>ontinual Learning with <span class="ace-letter">E</span>vidential Uncertainty for Inverse Modelling of Mobile Robots
+        </h1>
+        <p class="tldr">
+          <strong>TL;DR.</strong> We propose an uncertainty-aware continual-learning framework that enables stable online inverse-dynamics adaptation for mobile robots.
+        </p>
+
+        <div class="authors">
+          <span><strong>Anonymous Authors</strong></span>
+          <span class="aff">Paper under double-blind review at NeurIPS 2026</span>
+        </div>
+
+        <div class="hero-actions">
+          <a class="btn primary" href="https://openreview.net/forum?id=Iw7a9bjgOr">
+            <span>Paper (PDF)</span><span class="arrow">&rarr;</span>
+          </a>
+          <a class="btn ghost" href="https://github.com/neurips-submission-2026/neurips2026-submission/tree/main/submission_code">
+            <span>Source code</span><span class="arrow">&rarr;</span>
+          </a>
+          <a class="btn ghost" href="#results"><span>See results</span></a>
+        </div>
+
+        <div class="hero-stats" role="list">
+          <div role="listitem">
+            <strong>10<span class="den">/15</span></strong>
+            <span>cells where ACE is best or tied-best among neural methods</span>
+          </div>
+          <div role="listitem">
+            <strong>3</strong>
+            <span>platforms (ground, water, air), one shared adapter</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============== PROBLEM ============== -->
+    <section class="section setup">
+      <div class="section-head">
+        <p class="kicker">02 &middot; The problem</p>
+        <h2>Problem setting</h2>
+      </div>
+
+      <p class="dek">
+        Online learning is attractive in non-stationary environments but hazardous inside a closed-loop controller: structured changes in payload, friction, or drag should drive adaptation, while sensor and actuation noise should not. ACE separates the two by assigning <span class="un">epistemic</span> and <span class="un">aleatoric</span> uncertainty to different operational roles.
+      </p>
+
+      <figure class="wide-figure">
+        <img src="assets/figures/abstract.png" alt="Visual overview of ACE on mobile robots operating on the ground, in the air, and underwater: an offline evidential inverse-dynamics network is adapted online using epistemic uncertainty for replay selection and aleatoric uncertainty for update gating, with an L2 anchor to the offline weights." />
+        <figcaption>
+          Mobile robots operate under uncertainties that corrupt the data they see: wind gusts for an aerial vehicle, a flat tyre for a ground robot, sensor noise on any platform. ACE captures these along the trajectory as <span class="un">aleatoric</span> and <span class="un">epistemic</span> uncertainty, guiding <span class="when">when</span> to learn and <span class="what">what</span> to learn from.
+        </figcaption>
+      </figure>
+
+      <div class="setup-grid">
+        <article class="setup-card">
+          <h3>Persistent shift</h3>
+          <p>Payload changes, friction, fluid drag, wind. Residuals are structured and reflect real changes in the system; the model should adapt.</p>
+          <span class="card-tag plus">adapt</span>
+        </article>
+        <article class="setup-card">
+          <h3>Transient noise</h3>
+          <p>Sensor jitter, actuator noise, short-lived disturbances. Residuals are stochastic and uninformative; the model should hold the offline solution.</p>
+          <span class="card-tag minus">do not adapt</span>
+        </article>
+        <article class="setup-card">
+          <h3>Single-score baselines</h3>
+          <p>Uniform replay treats all recent samples as equally informative. Standard regularisation bounds drift but cannot distinguish the two regimes. A single predictive-uncertainty score conflates model ignorance with data noise, leading to opposing corrections in the two regimes.</p>
+          <span class="card-tag warn">conflated</span>
+        </article>
+      </div>
+
+    </section>
+
+    <!-- ============== METHOD ============== -->
+    <section id="method" class="section method">
+      <div class="section-head">
+        <p class="kicker">03 &middot; Method</p>
+        <h2>Method</h2>
+        <p class="dek">
+          A Normal-Inverse-Gamma head returns <span class="un">epistemic</span>&nbsp;(&epsilon;) and <span class="un">aleatoric</span>&nbsp;(a) uncertainty in one forward pass.
+          <span class="un">Epistemic</span> uncertainty drives sample selection; <span class="un">aleatoric</span> uncertainty gates updates.
+        </p>
+      </div>
+
+      <div class="method-grid">
+        <article class="method-card">
+          <span class="step">01</span>
+          <h3>Evidential inverse-dynamics network</h3>
+          <p>The network maps the query $\mathbf{z}=(\mathbf{x},\mathbf{y}^\star)$ to NIG parameters $(\mu,\nu,\alpha,\beta)$ per output. The applied action is $\mu$. The same parameters give <span class="un">aleatoric</span> and <span class="un">epistemic</span> uncertainty:</p>
+          $$ a=\frac{\beta}{\alpha-1},\qquad \varepsilon=\frac{\beta}{\nu(\alpha-1)} $$
+        </article>
+
+        <article class="method-card">
+          <span class="step">02</span>
+          <h3>Noise-discounted priority replay</h3>
+          <p>Each transition is buffered with priority</p>
+          $$ \rho_k=\frac{\varepsilon_k}{1+a_k} $$
+          <p>High-<span class="un">epistemic</span> novel transitions are kept; high-<span class="un">aleatoric</span> noisy ones are pushed out.</p>
+        </article>
+
+        <article class="method-card wide">
+          <span class="step">03</span>
+          <h3>Adaptive schedule with <span class="un">aleatoric</span> floor</h3>
+          <p>The regulariser $\lambda$ tracks a saturating function of the running <span class="un">epistemic</span> uncertainty $\bar{\varepsilon}_k$, projected onto an interval whose floor rises with the running <span class="un">aleatoric</span> uncertainty $\bar{a}_k$:</p>
+          $$ \lambda_{k+1}=\Pi_{\mathcal{I}_k}\!\Big[\lambda_k+\eta_\lambda\Big(\tfrac{\kappa}{\bar{\varepsilon}_k+\kappa}-\lambda_k\Big)\Big],\quad \mathcal{I}_k=\Big[\max\!\Big(\lambda_{\min},\,\tfrac{\bar{a}_k}{\bar{a}_k+\kappa}\Big),\,1\Big]. $$
+          <p>When noise dominates, the floor rises toward 1 and adaptation freezes.</p>
+        </article>
+
+        <article class="method-card">
+          <span class="step">04</span>
+          <h3>Anchored online objective</h3>
+          <p>The online loss adds the evidential regulariser and an $L_2$ anchor to the offline weights $\boldsymbol{\theta}_0$:</p>
+          $$ \mathcal{L}=\mathcal{L}_{\mathrm{NIG}}+\lambda_0\lambda_k\,\mathcal{R}_{\mathrm{ev}}+\frac{\kappa_a}{2}\,\lVert\boldsymbol{\theta}-\boldsymbol{\theta}_0\rVert_2^{2} $$
+        </article>
+      </div>
+
+      <figure class="wide-figure">
+        <img src="assets/figures/framework_overview.png" alt="Block diagram of the ACE method: an offline evidential inverse-dynamics network feeds a feed-forward control input plus epistemic and aleatoric uncertainty, which drive a noise-discounted priority replay buffer and an adaptive evidential regulariser anchored to the offline weights." />
+        <figcaption>
+          <strong>Overview of ACE.</strong> Offline evidential model adapted online with uncertainty-aware replay, an adaptive regulariser, and an L&#8322; anchor.
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- ============== RESULTS HEADLINE ============== -->
+    <section id="results" class="section results">
+      <div class="section-head">
+        <p class="kicker">04 &middot; Results</p>
+        <h2>Multi-platform tracking results</h2>
+        <p class="dek">All neural methods share the same offline checkpoint and the same feedback gain; differences arise only from the online update rule.</p>
+      </div>
+
+      <div class="table-block">
+        <div class="table-head">
+          <h3>Multi-platform tracking error (m)</h3>
+          <p>Best per cell <strong>bold</strong>, second-best <em>underlined</em>. Lower is better.</p>
+        </div>
+        <div class="table-scroll">
+          <table class="numbers">
+            <thead>
+              <tr>
+                <th rowspan="2" class="left">Method</th>
+                <th colspan="5" class="group ground">Ground</th>
+                <th colspan="5" class="group water">Underwater</th>
+                <th colspan="5" class="group air">Aerial</th>
+              </tr>
+              <tr>
+                <th>Calib.</th><th>Param.</th><th>Exog.</th><th>Sens.</th><th>Ctrl.</th>
+                <th>Calib.</th><th>Param.</th><th>Exog.</th><th>Sens.</th><th>Ctrl.</th>
+                <th>Calib.</th><th>Param.</th><th>Exog.</th><th>Sens.</th><th>Ctrl.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="left">LQR</td>
+                <td><em>0.047</em></td><td>0.166</td><td>0.746</td><td><strong>0.048</strong></td><td><em>0.061</em></td>
+                <td>0.241</td><td class="bad">1.720</td><td>0.252</td><td><strong>0.240</strong></td><td>0.242</td>
+                <td><strong>0.031</strong></td><td>0.138</td><td><strong>0.058</strong></td><td><em>0.033</em></td><td><em>0.031</em></td>
+              </tr>
+              <tr>
+                <td class="left">Frozen</td>
+                <td><strong>0.035</strong></td><td>0.053</td><td>0.252</td><td>0.055</td><td><strong>0.043</strong></td>
+                <td>0.238</td><td>1.320</td><td>0.248</td><td><em>0.250</em></td><td>0.237</td>
+                <td><em>0.032</em></td><td>0.145</td><td>0.068</td><td><strong>0.026</strong></td><td><strong>0.030</strong></td>
+              </tr>
+              <tr>
+                <td class="left">ER</td>
+                <td><strong>0.035</strong></td><td><em>0.052</em></td><td>0.252</td><td><em>0.054</em></td><td><strong>0.043</strong></td>
+                <td><em>0.225</em></td><td><em>0.485</em></td><td>0.282</td><td>0.316</td><td>0.284</td>
+                <td class="bad">0.146</td><td><em>0.121</em></td><td>0.131</td><td class="bad">0.160</td><td class="bad">0.166</td>
+              </tr>
+              <tr>
+                <td class="left">EWC</td>
+                <td><strong>0.035</strong></td><td><em>0.052</em></td><td>0.252</td><td><em>0.054</em></td><td><strong>0.043</strong></td>
+                <td><strong>0.224</strong></td><td><strong>0.480</strong></td><td>0.277</td><td>0.315</td><td>0.289</td>
+                <td class="bad">0.142</td><td>0.122</td><td>0.131</td><td class="bad">0.160</td><td class="bad">0.161</td>
+              </tr>
+              <tr>
+                <td class="left">ACE&#x2A;<span class="dim">&nbsp;(fixed &lambda;)</span></td>
+                <td>0.048</td><td>0.053</td><td><strong>0.099</strong></td><td><em>0.054</em></td><td>0.069</td>
+                <td>0.230</td><td>1.319</td><td><em>0.240</em></td><td><em>0.250</em></td><td><strong>0.222</strong></td>
+                <td><em>0.032</em></td><td><em>0.121</em></td><td>0.067</td><td><strong>0.026</strong></td><td><strong>0.030</strong></td>
+              </tr>
+              <tr class="ours">
+                <td class="left"><strong>ACE</strong> <span class="dim">(ours)</span></td>
+                <td>0.049</td><td><strong>0.051</strong></td><td><em>0.100</em></td><td><em>0.054</em></td><td>0.065</td>
+                <td>0.231</td><td>0.980</td><td><strong>0.236</strong></td><td><em>0.250</em></td><td><em>0.230</em></td>
+                <td><em>0.032</em></td><td><strong>0.105</strong></td><td><em>0.063</em></td><td><strong>0.026</strong></td><td><strong>0.030</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="capability">
+        <h3>Per-platform mean tracking error (m)</h3>
+        <p class="dim">Subscript std reflects the spread <em>across conditions</em>; the last column is the worst-cell error across the entire grid. Best per column <strong>bold</strong>, second-best <em>underlined</em>.</p>
+        <div class="cap-table-wrap">
+          <table class="cap">
+            <thead>
+              <tr>
+                <th class="left">Method</th>
+                <th>Ground</th><th>Underwater</th><th>Aerial</th><th>Worst cell</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="left">LQR</td><td>0.214<sub>&plusmn;0.270</sub></td><td>0.539<sub>&plusmn;0.591</sub></td><td>0.058<sub>&plusmn;0.041</sub></td><td class="bad">1.720</td></tr>
+              <tr><td class="left">Frozen</td><td>0.088<sub>&plusmn;0.083</sub></td><td>0.459<sub>&plusmn;0.431</sub></td><td>0.060<sub>&plusmn;0.045</sub></td><td>1.320</td></tr>
+              <tr><td class="left">ER</td><td>0.087<sub>&plusmn;0.083</sub></td><td><em>0.318<sub>&plusmn;0.089</sub></em></td><td>0.145<sub>&plusmn;0.017</sub></td><td><em>0.485</em></td></tr>
+              <tr><td class="left">EWC</td><td>0.087<sub>&plusmn;0.083</sub></td><td><strong>0.317<sub>&plusmn;0.087</sub></strong></td><td>0.143<sub>&plusmn;0.016</sub></td><td><strong>0.480</strong></td></tr>
+              <tr><td class="left">ACE&#x2A;</td><td><em>0.065<sub>&plusmn;0.019</sub></em></td><td>0.452<sub>&plusmn;0.434</sub></td><td><em>0.055<sub>&plusmn;0.036</sub></em></td><td>1.319</td></tr>
+              <tr class="ours-row"><td class="left ours-col"><strong>ACE</strong></td><td class="ours-col"><strong>0.064<sub>&plusmn;0.019</sub></strong></td><td class="ours-col">0.385<sub>&plusmn;0.297</sub></td><td class="ours-col"><strong>0.051<sub>&plusmn;0.030</sub></strong></td><td class="ours-col">0.980&dagger;</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="dim small">
+          ACE has the lowest mean error on Ground and Aerial. ER and EWC average lowest on Underwater but drift on the Aerial noise cells.
+          &dagger; ER and EWC reach a lower worst-cell number than ACE only because their worst cell is the underwater parametric shift.
+        </p>
+      </div>
+
+      <figure class="wide-figure">
+        <img src="assets/figures/fig_spider.png" alt="Polar plot showing rank of each method across the fifteen platform-condition cells; ACE has the largest covered area." />
+        <figcaption>
+          Per-cell rank across the fifteen platform/condition cells. The outer ring is the best method on each cell; ACE covers the largest area, while ER's polygon collapses on the aerial noise cells.
+        </figcaption>
+      </figure>
+
+      <figure class="wide-figure">
+        <img src="assets/figures/fig_learn_unlearn_multiplatform.png" alt="Tracking-error traces under a learn-then-unlearn rollout on all three platforms." />
+        <figcaption>
+          Learn-then-unlearn: each rollout has three windows (warm-up, shift, recovery). ER's post-shift error stays elevated on every 3-D cell; ACE's anchor and <span class="un">aleatoric</span> floor pull the parameters back to the offline solution.
+        </figcaption>
+      </figure>
+
+      <div class="capability" style="margin-top: 1.6rem;">
+        <h3>Post-shift tracking error (m)</h3>
+        <p class="dim">Mean Euclidean position error during the recovery window, after the shift is removed. Lower is better. Best per row in <strong>bold</strong>, second-best in <em>underline</em>.</p>
+        <div class="cap-table-wrap">
+          <table class="cap">
+            <thead>
+              <tr>
+                <th class="left">Cell</th>
+                <th>Frozen</th>
+                <th>ER</th>
+                <th>ACE&#x2A;</th>
+                <th>ACE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="left">Underwater &middot; mass shift</td><td>0.251</td><td>0.764</td><td><strong>0.240</strong></td><td><em>0.242</em></td></tr>
+              <tr><td class="left">Underwater &middot; disturbance</td><td><em>0.247</em></td><td>0.446</td><td><strong>0.214</strong></td><td><strong>0.214</strong></td></tr>
+              <tr><td class="left">Aerial &middot; mass shift</td><td><strong>0.031</strong></td><td>0.118</td><td><em>0.042</em></td><td><em>0.042</em></td></tr>
+              <tr><td class="left">Aerial &middot; disturbance</td><td><strong>0.031</strong></td><td>0.142</td><td><strong>0.031</strong></td><td><strong>0.031</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="dim small">
+          Frozen does not adapt, so it serves as the lower bound. ACE returns close to Frozen after the shift; ER stays elevated.
+        </p>
+      </div>
+
+    </section>
+
+    <!-- ============== SEE ACE ADAPT (tabbed) ============== -->
+    <section id="demos" class="section demos">
+      <div class="section-head">
+        <p class="kicker">05 &middot; Live behaviour</p>
+        <h2>See ACE adapt</h2>
+      </div>
+
+      <div class="demo-tabs" role="tablist" aria-label="Demo scenario selector">
+        <button class="demo-tab is-active"
+                role="tab"
+                data-scenario="friction"
+                aria-selected="true">
+          <span class="demo-tab-num">01</span>
+          <span class="demo-tab-label">Friction shift</span>
+        </button>
+        <button class="demo-tab"
+                role="tab"
+                data-scenario="noise"
+                aria-selected="false">
+          <span class="demo-tab-num">02</span>
+          <span class="demo-tab-label">Sensor noise</span>
+        </button>
+        <button class="demo-tab"
+                role="tab"
+                data-scenario="platforms"
+                aria-selected="false">
+          <span class="demo-tab-num">03</span>
+          <span class="demo-tab-label">All platforms</span>
+        </button>
+      </div>
+
+      <figure class="demo-stage">
+        <video id="demo-video"
+               src="assets/animations/hero_friction.mp4"
+               autoplay muted loop playsinline preload="metadata"
+               aria-describedby="demo-caption"></video>
+        <figcaption id="demo-caption" class="demo-caption">
+          Friction &times; 2.5 &mdash; <strong>&epsilon; says LEARN</strong>. ACE adapts; verdict panel reads +91&nbsp;% better than Frozen.
+        </figcaption>
+      </figure>
+    </section>
+
+    <!-- ============== ABLATIONS (APPENDIX C) — HIDDEN, MAY RE-ENABLE LATER ==============
+    <section id="figures" class="section gallery">
+      <div class="section-head">
+        <p class="kicker">05 &middot; Appendix&nbsp;C ablations</p>
+        <h2>Appendix&nbsp;C ablations</h2>
+        <p class="dek">Two ablations from Appendix&nbsp;C of the paper. The first sweeps observation noise on the ground vehicle to isolate the aleatoric-aware &lambda; floor; the second shows the per-step error trace on the aerial sensor and control-noise cells.</p>
+      </div>
+
+      <div class="fig-grid" style="grid-template-columns: 1fr; gap: 2rem;">
+        <figure class="lb wide" data-full="assets/figures/fig_sensor_sigma.png">
+          <img src="assets/figures/fig_sensor_sigma.png" alt="Sensor-noise sweep on the ground vehicle. ER's RMSE rises monotonically with sigma; ACE remains tight to Frozen across the full sweep." />
+          <figcaption><strong>Sensor-noise sweep (ground vehicle).</strong> Each marker is the 3-seed mean position RMSE on a 60-s nominal lemniscate rollout with Gaussian observation noise of standard deviation &sigma; added to (p<sub>x</sub>, p<sub>y</sub>). ER's RMSE rises monotonically because uniform replay incorporates sensor jitter into the residual labels; ACE's lambda-floor ratio rises with &sigma; as well, clipping &lambda; from below and gating updates. ACE stays tight to Frozen across the full sweep.</figcaption>
+        </figure>
+        <figure class="lb wide" data-full="assets/figures/fig_er_instability.png">
+          <img src="assets/figures/fig_er_instability.png" alt="Per-step tracking error on the aerial sensor and control-noise cells. ER's curve rises from ~0.04 m to a peak above 0.30 m on the sensor cell. ACE, ACE-star, and Frozen overlap at ~0.03 m for the entire rollout." />
+          <figcaption><strong>ER instability on the aerial noise cells (seed 42).</strong> ER's curve rises throughout the rollout because uniform replay incorporates noise into the weight updates. ACE, ACE&#x2A;, and Frozen overlap at the bottom of the plot because the aleatoric floor and noise gate hold &lambda; near unity, leaving the offline weights untouched. EWC is omitted from this figure to avoid overlap with ER; its 3-seed mean (0.161&nbsp;m sensor, 0.161&nbsp;m actuator) is essentially identical to ER's.</figcaption>
+        </figure>
+      </div>
+    </section>
+    ============== END HIDDEN ABLATIONS ============== -->
+
+  </main>
+
+  <footer class="site-foot">
+    <a class="totop" href="#top">Back to top &uarr;</a>
+  </footer>
+
+  <div id="lightbox" class="lightbox" aria-hidden="true">
+    <button class="lb-close" aria-label="Close">&times;</button>
+    <img alt="Expanded figure" />
+    <p class="lb-cap"></p>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

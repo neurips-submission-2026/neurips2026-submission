@@ -1,0 +1,26 @@
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+node_modules/
+
+# Local tooling / scratch
+.superpowers/
+.claude/
+
+# Python (submission_code/)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+
+# Benchmark / training outputs (never commit)
+submission_code/results/
+submission_code/*.png
+submission_code/*.pdf
+submission_code/*.npz
